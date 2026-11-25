@@ -393,4 +393,10 @@ Công cụ: Claude Code (model Claude Opus 5.5), chạy trực tiếp trên máy
 - Docker Hub giới hạn lượt kéo, lấy image chính thức của nginx và Prometheus từ mirror ECR Public và Quay rồi gắn lại tag.
 - File eval JSON lần đầu ghi đường dẫn tuyệt đối có thông tin cá nhân; chạy lại eval với `--dataset eval/golden_dataset.jsonl`.
 
-**Phần tự sửa, tự kiểm tra của người nộp:** _(chưa điền)_
+**Phần tự sửa, tự kiểm tra của người nộp:**
+
+- Tự chạy `check_production_ready.py` (bản đầy đủ, có Docker): PASS 12/12, 43/43 checks; `docker stop` 0,5 giây, exit code 0.
+- Tự gọi 12 request có key tới URL Railway: 10 lần 200, sau đó 2 lần 429, đúng giới hạn 10 request/phút.
+- Sửa thử `auth.py`, đổi mã lỗi từ 401 sang 403 rồi chạy lại script: dự đoán tiêu chí 6 sẽ fail nhưng **vẫn PASS 12/12**. Nguyên nhân (hỏi AI): tên check ghi "→ 401" nhưng `check_production_ready.py` dòng 645 chấp nhận cả 401 lẫn 403. Vậy PASS 12/12 chưa chứng minh đúng mã 401; lệnh thứ ba của CP6 (`POST /ask` không key, in mã HTTP) mới kiểm được. Đã trả lại như cũ bằng `git restore`.
+- Đọc `rate_limiter.py`: Dùng Redis để các worker dùng chung bộ đếm và không bị mất dữ liệu khi restart. Dùng Lua script để gom các bước kiểm tra và ghi thành một thao tác nguyên tử (atomic) trên một mốc giờ chung, ngăn chặn lỗi race condition khiến nhiều request lọt qua cùng lúc.
+- Đọc `cost_guard.py`: Kiểm tra trước để chặn ngay request khi đã hết tiền, tránh gọi LLM gây tốn phí oan. Ghi chi phí sau vì trước khi LLM trả lời xong, ta không thể biết chính xác số `output_tokens` sinh ra cũng như liệu request có thành công hay bị lỗi giữa chừng.
