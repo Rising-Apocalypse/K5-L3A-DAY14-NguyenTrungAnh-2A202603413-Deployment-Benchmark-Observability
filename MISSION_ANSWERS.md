@@ -144,7 +144,7 @@ Lưu ý: `main.py` của ví dụ này chưa dùng Redis hay Qdrant; compose m�
 
 ### Exercise 3.1: Deploy agent Part 6
 
-- URL: _chưa deploy_ <!-- URL_PUBLIC -->
+- URL: https://day14-agent-production-95a50df9.up.railway.app (Railway, có Redis riêng; `/health`, `/ready` → 200, `/ask` không key → 401, có key → 200)
 - Screenshot: [dashboard](screenshots/dashboard.png), [running](screenshots/running.png), [test](screenshots/test.png)
 - Chi tiết: [DEPLOYMENT.md](DEPLOYMENT.md)
 
