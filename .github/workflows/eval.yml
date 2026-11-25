@@ -1,0 +1,26 @@
+# Exercise 7.3 — quality gate: run_eval.py trả exit code 1 khi accuracy dưới ngưỡng
+# → step fail → job fail. Đặt job này là "required status check" của main để chặn merge.
+name: quality-gate
+on: [pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 06-lab-complete/benchmark-observability/develop
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - name: Run eval on agent v2
+        run: |
+          # MOCK_ERROR_RATE=0: gate đo chất lượng câu trả lời, không để lỗi upstream ngẫu nhiên làm fail
+          AGENT_VERSION=v2 MOCK_ERROR_RATE=0 PORT=8002 python app.py &
+          curl --retry 20 --retry-delay 1 --retry-connrefused -fsS http://localhost:8002/health
+          python eval/run_eval.py --url http://localhost:8002 --min-accuracy 0.85
